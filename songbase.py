@@ -15,7 +15,7 @@ class Artist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64))
     about = db.Column(db.Text)
-    songs = db.relationship('Song', backref='artist')
+    songs = db.relationship('Song', backref='artist', cascade='delete')
 
 class Song(db.Model):
     __tablename__ = 'songs'
@@ -72,18 +72,26 @@ def add_artists():
         return redirect(url_for('show_all_artists'))
 
 @app.route('/artist/edit/<int:id>', methods=['GET', 'POST'])
-def edit_artists():
+def edit_artists(id):
     artist = Artist.query.filter_by(id=id).first()
     if request.method == 'GET':
-        return render_template('artist-edit.html', artist= artist)
+        return render_template('artist-edit.html', artist=artist)
     if request.method == 'POST':
         # get data from the form
         artist.name = request.form['name']
         artist.about = request.form['about']
+        db.session.commit()
+        return redirect(url_for('show_all_artists'))
 
-        # insert the data into the database
-        artist = Artist(name=name, about=about)
-        db.session.add(artist)
+
+@app.route('/artist/delete/<int:id>', methods=['GET', 'POST'])
+def delete_artists(id):
+    artist = Artist.query.filter_by(id=id).first()
+    if request.method == 'GET':
+        return render_template('artist-delete.html', artist=artist)
+    if request.method == 'POST':
+        # get data from the form
+        db.session.delete(artist)
         db.session.commit()
         return redirect(url_for('show_all_artists'))
 
